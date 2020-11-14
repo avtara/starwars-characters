@@ -5,26 +5,33 @@ import endpoint from './endpoint';
 import './App.scss';
 
 function App() {
-  const [characters, setCharacters] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const useFetch = (url) => {
+    const [response, setResponse] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    setCharacters([]);
-    setError(null);
+    useEffect(() => {
+      setLoading(true);
+      setResponse(null);
+      setError(null);
 
-    fetch(endpoint + '/characters')
-      .then((response) => response.json())
-      .then((response) => {
-        setLoading(false);
-        setCharacters(response.characters);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError(err);
-      });
-  }, []);
+      fetch(url)
+        .then((response) => response.json())
+        .then((response) => {
+          setLoading(false);
+          setResponse(response);
+        })
+        .catch((err) => {
+          console.error(err);
+          setError(err);
+        });
+    }, []);
+
+    return [response, loading, error];
+  };
+
+  const [response, loading, error] = useFetch(endpoint + '/characters');
+  const characters = (response && response.characters) || [];
 
   return (
     <div className="App">
