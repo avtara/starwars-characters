@@ -1,33 +1,74 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import CharacterList from './CharacterList';
 import dummyData from './dummyData';
 import endpoint from './endpoint';
 import './App.scss';
 
+const initialState = {
+  result: 'null',
+  loading: true,
+  error: null,
+};
+
+const fetchReducer = (state, action) => {
+  if (action.type === 'LOADING') {
+    return {
+      result: 'null',
+      loading: true,
+      error: null,
+    };
+  }
+
+  if (action.type === 'RESPONSE_COMPLETE') {
+    return {
+      result: action.payload.response,
+      loading: false,
+      error: null,
+    };
+  }
+
+  if (action.type === 'ERROR') {
+    return {
+      result: null,
+      loading: false,
+      error: action.payload.error,
+    };
+  }
+  return state;
+};
+
 function App() {
   const useFetch = (url) => {
-    const [response, setResponse] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [state, dispatch] = useReducer(fetchReducer, initialState);
 
     useEffect(() => {
-      setLoading(true);
-      setResponse(null);
-      setError(null);
+      dispatch({ type: 'LOADING' });
 
-      fetch(url)
-        .then((response) => response.json())
-        .then((response) => {
-          setLoading(false);
-          setResponse(response);
-        })
-        .catch((err) => {
-          console.error(err);
-          setError(err);
-        });
+      const fetchUrl = async () => {
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          dispatch({ type: 'RESPONSE_COMPLETE', payload: { response: data } });
+        } catch (error) {
+          dispatch({ type: 'ERROR', payload: { error } });
+        }
+      };
+
+      fetchUrl();
+
+      // fetch(url)
+      //   .then((response) => response.json())
+      //   .then((response) => {
+      //     setLoading(false);
+      //     setResponse(response);
+      //   })
+      //   .catch((err) => {
+      //     console.error(err);
+      //     setError(err);
+      //   });
     }, []);
 
-    return [response, loading, error];
+    return [state.result, state.loading, state.error];
   };
 
   const [response, loading, error] = useFetch(endpoint + '/characters');
